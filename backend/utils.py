@@ -10,7 +10,7 @@ from decimal import Decimal
 import google.generativeai as genai
 from flask import current_app
 
-CATS = ['Food & Drinks', 'Travel', 'Bills & Utilities', 'Shopping', 'Health', 'Education', 'Groceries', 'Investments', 'Others']
+CATS = ['Food & Drinks', 'Travel', 'Bills & Utilities', 'Shopping', 'Health', 'Education', 'Groceries', 'Others']
 
 def calculateMonthlySummary(user_id, year, month):
     user = User.query.get(user_id)
