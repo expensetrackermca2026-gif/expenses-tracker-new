@@ -1,0 +1,331 @@
+{% extends "base.html" %}
+
+{% block title %}Smart Savings Recommendation | Expense Analyzer{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <!-- Header Section -->
+    <div class="row mb-5 animate__animated animate__fadeInDown">
+        <div class="col-12 text-center">
+            <h1 class="fw-bold text-gradient mb-2">
+                <span class="text-info">🐷</span> Smart Savings Recommendation
+            </h1>
+            <p class="text-muted lead">Enter your income to receive an AI-powered savings plan tailored to your
+                financial goals.</p>
+        </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="row justify-content-center mb-5">
+        <div class="col-lg-6">
+            <div class="dashboard-card p-4 shadow-lg border-0 animate__animated animate__fadeInUp">
+                <h5 class="mb-4 text-white"><i class="bi bi-cash-stack me-2 text-info"></i>Calculate Your Savings</h5>
+                <form id="savingsForm">
+                    <div class="mb-4">
+                        <label for="incomeInput" class="form-label text-muted small text-uppercase fw-bold">Monthly
+                            Income (INR)</label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text bg-transparent border-end-0 text-info">₹</span>
+                            <input type="number" class="form-control bg-transparent border-start-0 text-white"
+                                id="incomeInput" placeholder="e.g. 50000" min="1" required>
+                        </div>
+                        <div id="errorMsg" class="text-danger small mt-2 d-none"></div>
+                    </div>
+                    <button type="submit" id="submitBtn" class="btn btn-info w-100 py-3 fw-bold rounded-pill shadow-sm"
+                        disabled>
+                        Get Recommendations <i class="bi bi-arrow-right ms-1"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section (Hidden by default) -->
+    <div id="resultsSection" class="d-none">
+        <div class="row justify-content-center mb-5">
+            <div class="col-lg-8">
+                <div class="result-card p-4 rounded-4 shadow-lg border-0 animate__animated animate__zoomIn">
+                    <div class="text-center mb-4">
+                        <h6 class="text-info text-uppercase fw-bold mb-1" style="letter-spacing: 2px;">Recommended
+                            Monthly Savings</h6>
+                        <h1 class="display-3 fw-bold text-white mb-0">₹<span id="savingsAmount">0</span></h1>
+                    </div>
+
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-6">
+                            <div class="breakdown-item p-3 rounded-3 bg-body-tertiary">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">NEEDS (50%)</span>
+                                    <span class="text-white fw-bold">₹<span id="needsAmount">0</span></span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div id="needsProgress" class="progress-bar bg-primary" role="progressbar"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="breakdown-item p-3 rounded-3 bg-body-tertiary">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="text-muted small fw-bold">WANTS (30%)</span>
+                                    <span class="text-white fw-bold">₹<span id="wantsAmount">0</span></span>
+                                </div>
+                                <div class="progress" style="height: 6px;">
+                                    <div id="wantsProgress" class="progress-bar bg-warning" role="progressbar"
+                                        style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info border-0 shadow-sm rounded-4 p-4 mb-4">
+                        <div class="d-flex">
+                            <div class="me-3 fs-3">💡</div>
+                            <div>
+                                <h6 class="fw-bold mb-1">Financial Insight</h6>
+                                <p id="breakdownExplanation" class="mb-0 small"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emergency Fund Progress -->
+                    <div
+                        class="emergency-card p-4 rounded-4 border border-info border-opacity-25 bg-info bg-opacity-10">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h6 class="mb-0 fw-bold">🛡️ Emergency Fund Goal (3 Months)</h6>
+                            <span class="badge bg-info text-dark rounded-pill">Target: ₹<span
+                                    id="emergencyGoal">0</span></span>
+                        </div>
+                        <div class="progress mb-3" style="height: 12px; border-radius: 10px;">
+                            <div id="emergencyProgress"
+                                class="progress-bar bg-info progress-bar-striped progress-bar-animated"
+                                role="progressbar" style="width: 15%"></div>
+                        </div>
+                        <p class="text-center mb-0 small text-muted">
+                            At this rate, you'll reach your emergency goal in <strong class="text-info"><span
+                                    id="monthsToReach">0</span> months</strong>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- History Section -->
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <h5 class="text-white mb-4"><i class="bi bi-clock-history me-2 text-info"></i>Recommendation History</h5>
+            <div class="table-container p-4 rounded-4 shadow-lg border-0 bg-dark">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover mb-0">
+                        <thead>
+                            <tr class="text-muted small">
+                                <th>DATE</th>
+                                <th>INCOME</th>
+                                <th>SAVINGS</th>
+                                <th>EXPLANATION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody">
+                            {% for rec in history %}
+                            <tr>
+                                <td class="small">{{ rec.created_at.strftime('%d %b %Y') }}</td>
+                                <td class="fw-bold">₹{{ "%.0f"|format(rec.monthly_income) }}</td>
+                                <td class="text-info fw-bold">₹{{ "%.0f"|format(rec.recommended_savings) }}</td>
+                                <td class="small text-muted">{{ rec.explanation[:60] }}...</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-4 text-muted">No history yet. Start by entering
+                                    your income above!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .text-gradient {
+        background: linear-gradient(135deg, #0dcaf0 0%, #0d6efd 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .dashboard-card,
+    .result-card,
+    .table-container {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(15px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .result-card {
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.9));
+    }
+
+    .breakdown-item {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .input-group-text,
+    .form-control {
+        border-color: rgba(255, 255, 255, 0.1) !important;
+    }
+
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #0dcaf0 !important;
+    }
+
+    .table {
+        --bs-table-bg: transparent;
+    }
+
+    /* Animation for the number counter */
+    @keyframes countup {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    #savingsAmount {
+        display: inline-block;
+        transition: all 0.5s ease;
+    }
+
+    /* Progress bar transition */
+    .progress-bar {
+        transition: width 1s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('savingsForm');
+        const incomeInput = document.getElementById('incomeInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const errorMsg = document.getElementById('errorMsg');
+        const resultsSection = document.getElementById('resultsSection');
+
+        // Validation & Button state
+        incomeInput.addEventListener('input', function () {
+            const val = parseFloat(this.value);
+            if (val > 0) {
+                submitBtn.disabled = false;
+                errorMsg.classList.add('d-none');
+            } else {
+                submitBtn.disabled = true;
+                if (this.value !== "") {
+                    errorMsg.textContent = "Please enter a positive income amount.";
+                    errorMsg.classList.remove('d-none');
+                }
+            }
+        });
+
+        form.addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const income = parseFloat(incomeInput.value);
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Calculating...';
+
+            try {
+                const response = await fetch('/api/savings/recommend', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ income: income })
+                });
+
+                if (!response.ok) throw new Error('Failed to get recommendations');
+
+                const data = await response.json();
+                displayResults(data);
+
+                // Add to history table top
+                addToHistoryTable(data);
+
+            } catch (err) {
+                Swal.fire('Error', err.message, 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'Get Recommendations <i class="bi bi-arrow-right ms-1"></i>';
+            }
+        });
+
+        function displayResults(data) {
+            resultsSection.classList.remove('d-none');
+            resultsSection.scrollIntoView({ behavior: 'smooth' });
+
+            // Animated counter for savings amount
+            animateValue("savingsAmount", 0, data.savings, 1000);
+            animateValue("needsAmount", 0, data.needs, 1000);
+            animateValue("wantsAmount", 0, data.wants, 1000);
+            animateValue("emergencyGoal", 0, data.emergency_fund_goal, 1000);
+
+            document.getElementById('monthsToReach').textContent = data.months_to_reach_goal;
+            document.getElementById('breakdownExplanation').textContent = data.explanation;
+
+            // Update Progress Bars
+            setTimeout(() => {
+                document.getElementById('needsProgress').style.width = '50%';
+                document.getElementById('wantsProgress').style.width = '30%';
+                // Emergency fund progress is symbolic for the goal itself since we don't know current savings, 
+                // but let's show a fixed 100% since it's the "Goal" progress bar being introduced.
+                // Or better, show 10% as "Starting point"
+                document.getElementById('emergencyProgress').style.width = '100%';
+            }, 100);
+        }
+
+        function animateValue(id, start, end, duration) {
+            const obj = document.getElementById(id);
+            if (!obj) return;
+            const range = end - start;
+            let current = start;
+            const increment = end > start ? Math.ceil(range / (duration / 10)) : -1;
+            const stepTime = 10;
+            const timer = setInterval(() => {
+                current += increment;
+                if ((increment > 0 && current >= end) || (increment < 0 && current <= end)) {
+                    obj.textContent = end.toLocaleString('en-IN');
+                    clearInterval(timer);
+                } else {
+                    obj.textContent = current.toLocaleString('en-IN');
+                }
+            }, stepTime);
+        }
+
+        function addToHistoryTable(data) {
+            const tbody = document.getElementById('historyTableBody');
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+            // Remove "No history yet" row if exists
+            if (tbody.rows.length === 1 && tbody.rows[0].cells.length === 1) {
+                tbody.innerHTML = '';
+            }
+
+            const row = tbody.insertRow(0);
+            row.innerHTML = `
+                <td class="small">${dateStr}</td>
+                <td class="fw-bold">₹${data.income.toLocaleString('en-IN')}</td>
+                <td class="text-info fw-bold">₹${data.savings.toLocaleString('en-IN')}</td>
+                <td class="small text-muted">${data.explanation.substring(0, 60)}...</td>
+            `;
+            row.classList.add('animate__animated', 'animate__fadeInLeft');
+        }
+    });
+</script>
+{% endblock %}

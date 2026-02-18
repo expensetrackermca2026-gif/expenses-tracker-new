@@ -1,0 +1,808 @@
+{% extends "base.html" %}
+
+{% block title %}Micro Investment Advisor | Expense Analyzer{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12 text-center animate__animated animate__fadeInDown">
+            <h2 class="fw-bold text-gradient mb-2">
+                <span class="text-primary">💰</span> Micro Investment Advisor
+            </h2>
+            <p class="text-muted lead">Smart investment ideas tailored to your savings goal</p>
+        </div>
+    </div>
+
+    <!-- AI STRATEGY BOX -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="dashboard-card p-4 border-start border-warning border-5 shadow-lg animate__animated animate__fadeIn"
+                style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.1), rgba(30, 41, 59, 0.5));">
+                <div class="d-flex align-items-center">
+                    <div class="me-3 fs-2">💡</div>
+                    <div>
+                        <h6 class="text-warning fw-bold text-uppercase mb-1" style="letter-spacing: 1px;">Expenses
+                            Analyzer Strategy</h6>
+                        <p class="mb-0 text-white fw-bold">{{ ai_advice }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="budget-summary-card p-4 rounded-4 animate__animated animate__fadeInUp">
+                <div class="row align-items-center">
+                    <div class="col-md-4 text-center border-end-md">
+                        <div class="budget-icon mb-2">🎯</div>
+                        <h4 class="text-white mb-1">₹{{ "%.0f"|format(savings_goal) }}</h4>
+                        <small class="text-muted">Monthly Savings Goal</small>
+                    </div>
+                    <div class="col-md-4 text-center border-end-md">
+                        <div class="budget-icon mb-2">📊</div>
+                        <h4 class="text-info mb-1">{{ tier|title }}</h4>
+                        <small class="text-muted">Investment Tier</small>
+                    </div>
+                    <div class="col-md-4 text-center">
+                        <div class="budget-icon mb-2">📈</div>
+                        <h4 class="text-success mb-1">{{ suggestions|length }}</h4>
+                        <small class="text-muted">Suggestions</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Allocation Bar -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="allocation-card p-4 rounded-4">
+                <h6 class="text-white mb-3"><i class="bi bi-pie-chart-fill me-2"></i>Budget Allocation</h6>
+                <div class="allocation-bar mb-3">
+                    <div class="allocation-segment micro" data-width="{{ allocation.micro_percent }}"
+                        data-bs-toggle="tooltip" title="Micro: ₹{{ '%.0f'|format(allocation.micro) }}">
+                    </div>
+                    <div class="allocation-segment safe" data-width="{{ allocation.safe_percent }}"
+                        data-bs-toggle="tooltip" title="Safe: ₹{{ '%.0f'|format(allocation.safe) }}">
+                    </div>
+                    <div class="allocation-segment growth" data-width="{{ allocation.growth_percent }}"
+                        data-bs-toggle="tooltip" title="Growth: ₹{{ '%.0f'|format(allocation.growth) }}">
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between flex-wrap">
+                    <span class="badge bg-primary-soft text-primary me-2 mb-2">
+                        <span class="allocation-dot micro"></span> Micro: ₹{{ "%.0f"|format(allocation.micro) }}
+                    </span>
+                    <span class="badge bg-success-soft text-success me-2 mb-2">
+                        <span class="allocation-dot safe"></span> Safe: ₹{{ "%.0f"|format(allocation.safe) }}
+                    </span>
+                    <span class="badge bg-warning-soft text-warning mb-2">
+                        <span class="allocation-dot growth"></span> Growth: ₹{{ "%.0f"|format(allocation.growth) }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Savings Slider -->
+    <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div class="slider-card p-4 rounded-4">
+                <h6 class="text-white mb-3"><i class="bi bi-sliders me-2"></i>Simulate Different Savings</h6>
+                <div class="d-flex align-items-center gap-3">
+                    <span class="text-muted">₹500</span>
+                    <input type="range" class="form-range flex-grow-1" id="savingsSlider" min="500" max="50000"
+                        step="500" value="{{ savings_goal }}">
+                    <span class="text-muted">₹50,000</span>
+                </div>
+                <div class="text-center mt-2">
+                    <span class="badge bg-info fs-6" id="sliderValue">₹{{ "%.0f"|format(savings_goal) }}</span>
+                    <button class="btn btn-sm btn-outline-primary ms-3" id="recalculateBtn">
+                        <i class="bi bi-arrow-repeat me-1"></i>Recalculate
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Savings Encouragement -->
+    {% if savings_goal < 1000 %} <div class="row justify-content-center mb-4">
+        <div class="col-lg-8">
+            <div
+                class="encouragement-card p-3 rounded-4 text-center animate__animated animate__pulse animate__infinite animate__slow">
+                <span class="fs-4">🌱</span>
+                <p class="mb-0 text-white">"Even small investments grow over time. Start tiny."</p>
+            </div>
+        </div>
+</div>
+{% endif %}
+
+<!-- Investment Cards Grid -->
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        <h5 class="text-white mb-4 text-center">
+            <i class="bi bi-lightbulb-fill text-warning me-2"></i>
+            Investment Ideas Based on Your Savings
+        </h5>
+
+        <div class="row g-4" id="investmentGrid">
+            {% for item in suggestions %}
+            <div class="col-md-6 col-lg-4 animate__animated animate__fadeInUp" data-delay="{{ loop.index * 0.1 }}">
+                <div class="investment-card h-100" data-risk="{{ item.risk }}">
+                    <div class="card-image-container">
+                        <img src="{{ url_for('static', filename='images/' + item.image) }}" alt="{{ item.type }}"
+                            class="card-image" onerror="this.src='https://placehold.co/100?text={{ item.type[:1] }}'">
+                        <div class="risk-badge risk-{{ item.risk|lower }}">{{ item.risk }}</div>
+                    </div>
+                    <div class="card-content">
+                        <h5 class="card-title">{{ item.type }}</h5>
+                        <div class="invest-amount">
+                            <span class="currency">₹</span>
+                            <span class="amount">{{ "%.0f"|format(item.amount) }}</span>
+                        </div>
+                        <p class="card-description">{{ item.description }}</p>
+                        <div class="card-meta">
+                            <div class="return-range">
+                                <i class="bi bi-graph-up-arrow text-success me-1"></i>
+                                <span>{{ item.return_range }}</span>
+                            </div>
+                            <div class="min-investment">
+                                <small class="text-muted">Min: ₹{{ item.min_amount }}</small>
+                            </div>
+                        </div>
+                        <div class="progress-container mt-3">
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar bg-gradient-primary"
+                                    data-width="{{ (item.amount / savings_goal * 100)|round }}"></div>
+                            </div>
+                            <small class="text-muted">{{ ((item.amount / savings_goal) * 100)|round }}% of
+                                budget</small>
+                        </div>
+                    </div>
+                    <div class="card-footer-actions">
+                        <button class="btn btn-sm btn-outline-info" data-bs-toggle="tooltip" title="{{ item.tooltip }}">
+                            <i class="bi bi-info-circle"></i> Learn More
+                        </button>
+                        <button class="btn btn-sm btn-primary favorite-btn"
+                            onclick="toggleFavorite(this, '{{ item.type }}')">
+                            <i class="bi bi-heart"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Future Value Projection -->
+<div class="row justify-content-center mt-5 mb-4">
+    <div class="col-lg-8">
+        <div class="projection-card p-4 rounded-4">
+            <h5 class="text-white mb-4 text-center">
+                <i class="bi bi-rocket-takeoff-fill text-info me-2"></i>
+                Future Value Projection (5 Years)
+            </h5>
+            <canvas id="projectionChart" height="200"></canvas>
+            <div class="text-center mt-3">
+                <span class="badge bg-success fs-6">
+                    Estimated Value: ₹{{ "%.0f"|format(future_value) }}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- First Investment Badge -->
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-6">
+        <div class="gamification-card p-4 rounded-4 text-center">
+            <div class="badge-icon mb-3">🏅</div>
+            <h6 class="text-white">Unlock Your First Investor Badge!</h6>
+            <p class="text-muted small mb-3">Start with any investment to earn your first badge</p>
+            <button class="btn btn-gradient-gold btn-sm" id="startInvestingBtn">
+                <i class="bi bi-trophy-fill me-1"></i> Start Investing Today
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Disclaimer -->
+<div class="row justify-content-center mt-4">
+    <div class="col-lg-8">
+        <div class="disclaimer-card p-3 rounded-3 text-center">
+            <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>
+            <small class="text-muted">
+                <strong>Disclaimer:</strong> This is educational guidance, not financial advice.
+                Please consult a certified financial advisor before making investment decisions.
+            </small>
+        </div>
+    </div>
+</div>
+</div>
+
+
+
+<style>
+    /* ========================================
+   MICRO INVESTMENT ADVISOR STYLES
+   ======================================== */
+
+    /* Gradient Text */
+    .text-gradient {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    /* Budget Summary Card */
+    .budget-summary-card {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    .budget-icon {
+        font-size: 2rem;
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    }
+
+    .border-end-md {
+        border-right: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 768px) {
+        .border-end-md {
+            border-right: none;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+    }
+
+    /* Allocation Card */
+    .allocation-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .allocation-bar {
+        height: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 6px;
+        overflow: hidden;
+        display: flex;
+    }
+
+    .allocation-segment {
+        height: 100%;
+        transition: width 0.5s ease;
+    }
+
+    .allocation-segment.micro {
+        background: linear-gradient(90deg, #667eea, #764ba2);
+    }
+
+    .allocation-segment.safe {
+        background: linear-gradient(90deg, #10b981, #059669);
+    }
+
+    .allocation-segment.growth {
+        background: linear-gradient(90deg, #f59e0b, #d97706);
+    }
+
+    .allocation-dot {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        margin-right: 4px;
+    }
+
+    .allocation-dot.micro {
+        background: #764ba2;
+    }
+
+    .allocation-dot.safe {
+        background: #10b981;
+    }
+
+    .allocation-dot.growth {
+        background: #f59e0b;
+    }
+
+    .bg-primary-soft {
+        background: rgba(102, 126, 234, 0.2) !important;
+    }
+
+    .bg-success-soft {
+        background: rgba(16, 185, 129, 0.2) !important;
+    }
+
+    .bg-warning-soft {
+        background: rgba(245, 158, 11, 0.2) !important;
+    }
+
+    /* Slider Card */
+    .slider-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .form-range::-webkit-slider-thumb {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border: none;
+        box-shadow: 0 0 15px rgba(102, 126, 234, 0.5);
+    }
+
+    .form-range::-webkit-slider-runnable-track {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Encouragement Card */
+    .encouragement-card {
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.3) 0%, rgba(5, 150, 105, 0.3) 100%);
+        border: 1px dashed #10b981;
+    }
+
+    /* Investment Cards */
+    .investment-card {
+        background: rgba(30, 41, 59, 0.9);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        position: relative;
+    }
+
+    .investment-card:hover {
+        transform: translateY(-10px) scale(1.02);
+        border-color: rgba(102, 126, 234, 0.5);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.2);
+    }
+
+    .investment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #667eea, #764ba2);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .investment-card:hover::before {
+        opacity: 1;
+    }
+
+    .card-image-container {
+        position: relative;
+        height: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        padding: 1rem;
+    }
+
+    .card-image {
+        max-width: 80px;
+        max-height: 80px;
+        object-fit: contain;
+        filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.3));
+        transition: transform 0.3s ease;
+    }
+
+    .investment-card:hover .card-image {
+        transform: scale(1.1) rotate(5deg);
+    }
+
+    .risk-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .risk-low {
+        background: linear-gradient(135deg, #10b981, #059669);
+        color: white;
+    }
+
+    .risk-medium {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+    }
+
+    .risk-high {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: white;
+    }
+
+    .card-content {
+        padding: 1.5rem;
+    }
+
+    .card-title {
+        color: white;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .invest-amount {
+        margin-bottom: 1rem;
+    }
+
+    .invest-amount .currency {
+        font-size: 1rem;
+        color: #10b981;
+        vertical-align: top;
+    }
+
+    .invest-amount .amount {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #10b981;
+        line-height: 1;
+    }
+
+    .card-description {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        line-height: 1.5;
+        margin-bottom: 1rem;
+    }
+
+    .card-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+    }
+
+    .return-range {
+        color: #10b981;
+        font-size: 0.85rem;
+        font-weight: 500;
+    }
+
+    .progress-container {
+        text-align: center;
+    }
+
+    .progress {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(90deg, #667eea, #764ba2) !important;
+    }
+
+    .card-footer-actions {
+        display: flex;
+        justify-content: space-between;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .favorite-btn.active {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border-color: transparent;
+    }
+
+    .favorite-btn.active i {
+        color: white;
+    }
+
+    /* Projection Card */
+    .projection-card {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    /* Gamification Card */
+    .gamification-card {
+        background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.2) 100%);
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .badge-icon {
+        font-size: 3rem;
+        animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+
+        0%,
+        20%,
+        50%,
+        80%,
+        100% {
+            transform: translateY(0);
+        }
+
+        40% {
+            transform: translateY(-20px);
+        }
+
+        60% {
+            transform: translateY(-10px);
+        }
+    }
+
+    .btn-gradient-gold {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+    }
+
+    .btn-gradient-gold:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(245, 158, 11, 0.4);
+        color: white;
+    }
+
+    /* Disclaimer Card */
+    .disclaimer-card {
+        background: rgba(245, 158, 11, 0.1);
+        border: 1px dashed rgba(245, 158, 11, 0.5);
+    }
+
+    /* Light Theme Integration */
+    [data-bs-theme="light"] .investment-card,
+    [data-bs-theme="light"] .budget-summary-card,
+    [data-bs-theme="light"] .allocation-card,
+    [data-bs-theme="light"] .slider-card,
+    [data-bs-theme="light"] .projection-card {
+        background: rgba(255, 255, 255, 0.9);
+        border-color: rgba(0, 0, 0, 0.1);
+        backdrop-filter: blur(10px);
+    }
+
+    [data-bs-theme="light"] .card-title,
+    [data-bs-theme="light"] .text-white {
+        color: #1e293b !important;
+    }
+
+    [data-bs-theme="light"] .card-description,
+    [data-bs-theme="light"] .text-muted {
+        color: #64748b !important;
+    }
+
+    /* Responsive */
+    @media (max-width: 576px) {
+        .investment-card {
+            margin-bottom: 1rem;
+        }
+
+        .invest-amount .amount {
+            font-size: 1.5rem;
+        }
+
+        .card-meta {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+    }
+
+    /* Animations */
+    @keyframes shimmer {
+        0% {
+            background-position: -200% 0;
+        }
+
+        100% {
+            background-position: 200% 0;
+        }
+    }
+
+    .investment-card.loading {
+        background: linear-gradient(90deg, rgba(30, 41, 59, 0.9) 25%, rgba(50, 61, 79, 0.9) 50%, rgba(30, 41, 59, 0.9) 75%);
+        background-size: 200% 100%;
+        animation: shimmer 1.5s infinite;
+    }
+</style>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Savings Slider
+        const slider = document.getElementById('savingsSlider');
+        const sliderValue = document.getElementById('sliderValue');
+        const recalculateBtn = document.getElementById('recalculateBtn');
+
+        slider.addEventListener('input', function () {
+            sliderValue.textContent = '₹' + parseInt(this.value).toLocaleString('en-IN');
+        });
+
+        recalculateBtn.addEventListener('click', function () {
+            const newGoal = slider.value;
+            window.location.href = '/investments?goal=' + newGoal;
+        });
+
+        // Future Value Projection Chart
+        const ctx = document.getElementById('projectionChart').getContext('2d');
+        const monthlyInvestment = parseFloat('{{ savings_goal }}') || 0;
+        const years = [0, 1, 2, 3, 4, 5];
+        const projectedValues = years.map(year => {
+            // Assuming 10% annual return with monthly compounding
+            const months = year * 12;
+            const rate = 0.10 / 12;
+            if (rate === 0) return monthlyInvestment * months;
+            return monthlyInvestment * (Math.pow(1 + rate, months) - 1) / rate * (1 + rate);
+        });
+
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: years.map(y => 'Year ' + y),
+                datasets: [{
+                    label: 'Portfolio Value',
+                    data: projectedValues,
+                    fill: true,
+                    backgroundColor: 'rgba(102, 126, 234, 0.2)',
+                    borderColor: '#667eea',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#764ba2',
+                    pointBorderColor: '#fff',
+                    pointBorderWidth: 2,
+                    pointRadius: 6,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(30, 41, 59, 0.9)',
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        padding: 12,
+                        displayColors: false,
+                        callbacks: {
+                            label: function (context) {
+                                return '₹' + Math.round(context.raw).toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)'
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.1)'
+                        },
+                        ticks: {
+                            color: 'rgba(255, 255, 255, 0.7)',
+                            callback: function (value) {
+                                return '₹' + value.toLocaleString('en-IN');
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Apply dynamic widths to allocation segments
+        document.querySelectorAll('[data-width]').forEach(segment => {
+            segment.style.width = segment.getAttribute('data-width') + '%';
+        });
+
+        // Apply dynamic animation delays
+        document.querySelectorAll('[data-delay]').forEach(card => {
+            card.style.animationDelay = card.getAttribute('data-delay') + 's';
+        });
+
+        // First Investment Button
+        document.getElementById('startInvestingBtn').addEventListener('click', function () {
+            // Show celebration animation
+            this.innerHTML = '<i class="bi bi-check-circle-fill me-1"></i> Badge Unlocked!';
+            this.classList.remove('btn-gradient-gold');
+            this.classList.add('btn-success');
+
+            // Store badge
+            localStorage.setItem('firstInvestorBadge', 'true');
+
+            // Confetti effect (simple version)
+            createConfetti();
+        });
+    });
+
+    // Toggle Favorite
+    function toggleFavorite(btn, investmentType) {
+        btn.classList.toggle('active');
+        const icon = btn.querySelector('i');
+
+        if (btn.classList.contains('active')) {
+            icon.className = 'bi bi-heart-fill';
+            // Save to localStorage
+            let favorites = JSON.parse(localStorage.getItem('favoriteInvestments') || '[]');
+            if (!favorites.includes(investmentType)) {
+                favorites.push(investmentType);
+                localStorage.setItem('favoriteInvestments', JSON.stringify(favorites));
+            }
+        } else {
+            icon.className = 'bi bi-heart';
+            let favorites = JSON.parse(localStorage.getItem('favoriteInvestments') || '[]');
+            favorites = favorites.filter(f => f !== investmentType);
+            localStorage.setItem('favoriteInvestments', JSON.stringify(favorites));
+        }
+    }
+
+    // Load favorites on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        const favorites = JSON.parse(localStorage.getItem('favoriteInvestments') || '[]');
+        document.querySelectorAll('.favorite-btn').forEach(btn => {
+            const card = btn.closest('.investment-card');
+            const title = card.querySelector('.card-title').textContent;
+            if (favorites.includes(title)) {
+                btn.classList.add('active');
+                btn.querySelector('i').className = 'bi bi-heart-fill';
+            }
+        });
+    });
+
+    // Simple confetti effect
+    function createConfetti() {
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.style.cssText = `
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background: ${['#667eea', '#764ba2', '#f59e0b', '#10b981', '#ef4444'][Math.floor(Math.random() * 5)]};
+            left: ${Math.random() * 100}vw;
+            top: -10px;
+            opacity: 1;
+            border-radius: ${Math.random() > 0.5 ? '50%' : '0'};
+            pointer-events: none;
+            z-index: 9999;
+            animation: confettiFall ${2 + Math.random() * 3}s linear forwards;
+        `;
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+
+    // Add confetti animation
+    const style = document.createElement('style');
+    style.textContent = `
+    @keyframes confettiFall {
+        to {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
+    }
+`;
+    document.head.appendChild(style);
+</script>
+{% endblock %}

@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row mt-4">
+    <!-- UPLOAD SECTION -->
+    <div class="col-md-5">
+        <div class="dashboard-card p-5 text-center shadow-lg animate__animated animate__fadeInLeft position-relative">
+            <div id="parserLoading"
+                style="display: none; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.9); z-index: 10; border-radius: 20px; flex-direction: column; justify-content: center; align-items: center;">
+                <div class="spinner-grow text-primary" role="status"></div>
+                <h5 class="mt-3 fw-bold text-primary">AI Analyzing Ledger... ⏳</h5>
+                <p class="small text-muted">Scanning transactions & updating dashboard.</p>
+            </div>
+
+            <h2 class="fw-bold mb-3 text-primary">AI Statement Parser</h2>
+            <p class="text-muted">Upload your Bank PDF to extract data automatically.</p>
+            <form action="/parser" method="POST" enctype="multipart/form-data" class="mt-4"
+                onsubmit="document.getElementById('parserLoading').style.display='flex'">
+                <input type="file" name="statement" class="form-control mb-3" accept=".pdf" required>
+                <button type="submit" class="btn btn-grad-primary w-100 py-3 fw-bold">Analyze Statement 🚀</button>
+            </form>
+        </div>
+        <!-- PARSER SUMMARY -->
+        <div class="row mt-4 g-2">
+            <div class="col-6">
+                <div class="dashboard-card p-3 text-center border-start border-success border-5"><small>PDF
+                        RECEIVED</small>
+                    <h4 class="text-success fw-bold">₹ {{ p_received }}</h4>
+                </div>
+            </div>
+            <div class="col-6">
+                <div class="dashboard-card p-3 text-center border-start border-danger border-5"><small>PDF PAID</small>
+                    <h4 class="text-danger fw-bold">₹ {{ p_paid }}</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PDF DATA TABLE -->
+    <div class="col-md-7">
+        <div class="dashboard-card p-4 shadow-lg animate__animated animate__fadeInRight">
+            <h5 class="fw-bold mb-3 text-primary">Parsed Transactions</h5>
+            <div class="table-container" style="max-height: 500px; overflow-y: auto; border-radius: 10px;">
+                <table class="table table-hover align-middle">
+                    <thead class="sticky-top bg-dark">
+                        <tr class="small text-uppercase">
+                            <th class="ps-3">Date</th>
+                            <th>Description</th>
+                            <th>Upload Batch</th> <!-- NEW -->
+                            <th class="text-end">Amount</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for e in expenses %}
+                        <tr class="border-bottom border-secondary-subtle">
+                            <td class="ps-3 small opacity-75">{{ e.expense_date.strftime('%b %d') if e.expense_date else
+                                'N/A' }}</td>
+                            <td class="fw-bold text-truncate" style="max-width: 120px;">{{ e.title }}</td>
+                            <td><span class="badge bg-secondary p-1" style="font-size: 10px;">{{ e.statement_tag if
+                                    e.statement_tag else 'AI-PARSED' }}</span></td> <!-- TAG -->
+                            <td
+                                class="fw-bold text-end {% if e.type == 'Received' %}text-success{% else %}text-danger{% endif %}">
+                                ₹{{ "{:,.2f}".format(e.amount) }}
+                            </td>
+                            <td><a href="/delete/{{ e.id }}" class="text-danger">✕</a>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+        background: #3b82f6;
+        border-radius: 10px;
+    }
+
+    .sticky-top {
+        position: sticky;
+        top: 0;
+        background-color: #1e293b !important;
+        z-index: 10;
+    }
+
+    [data-bs-theme="light"] .sticky-top {
+        background-color: #ffffff !important;
+    }
+</style>
+{% endblock %}

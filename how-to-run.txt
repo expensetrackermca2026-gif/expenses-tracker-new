@@ -1,0 +1,44 @@
+# 🚀 How to Run Expense Analyzer
+
+Follow these steps to set up and run the project locally or via Docker.
+
+## 🐍 Option 1: Local Setup (Python)
+
+1. **Navigate to the Backend Directory**:
+   ```bash
+   cd backend
+   ```
+
+2. **Initialize Environment**:
+   - Create a virtual environment: `python -m venv venv`
+   - Activate it: `.\venv\Scripts\activate` (Windows) or `source venv/bin/activate` (Linux/Mac)
+   - Install dependencies: `pip install -r requirements.txt`
+
+3. **Configure Environment Variables**:
+   - Ensure the `.env` file at the project root is filled with valid credentials.
+
+4. **Run the Application**:
+   ```bash
+   python run_app.py
+   ```
+   The app will start at http://localhost:5000
+
+---
+
+## 🐳 Option 2: Docker Setup (Recommended)
+
+1. **Build and Start**:
+   - From the project root, run:
+   ```bash
+   docker-compose -f backend/docker-compose.yml up --build
+   ```
+   (Note: We point to the compose file inside the backend folder)
+
+2. **Access**:
+   - Open your browser at http://localhost:5000
+
+---
+
+## 🧪 Testing
+- Run `python backend/create_test_user.py` to create a default testing account.
+- **Login**: test@example.com / password123
